@@ -1,0 +1,29 @@
+[Unit]
+Description=EvoNexus Log Viewer (evo-projects/log-viewer)
+Documentation=file:///home/evonexus/evo-projects/log-viewer/start.sh
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Environment=BASE_PATH=/log-viewer
+Environment=LOG_VIEWER_PORT=8082
+Environment=LOG_VIEWER_HOST=127.0.0.1
+
+Type=forking
+PIDFile=/home/evonexus/evo-projects/log-viewer/log-viewer.pid
+WorkingDirectory=/home/evonexus/evo-projects/log-viewer
+ExecStart=/usr/bin/bash /home/evonexus/evo-projects/log-viewer/start.sh
+
+Restart=always
+RestartSec=5
+User=evonexus
+Group=evonexus
+
+TimeoutStartSec=60
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=log-viewer
+
+[Install]
+WantedBy=multi-user.target

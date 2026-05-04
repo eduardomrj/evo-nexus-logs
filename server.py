@@ -5,15 +5,16 @@ import json
 import os
 import re
 from calendar import monthrange
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-LOGS_DIR = Path("/home/evonexus/evo-nexus/ADWs/logs")
+LOGS_DIR = Path(os.environ.get("LOG_VIEWER_LOGS_DIR", "/home/evonexus/evo-nexus/ADWs/logs"))
 HEARTBEATS_DIR = LOGS_DIR / "heartbeats"
 DETAIL_DIR = LOGS_DIR / "detail"
-PORT = 8082
+PORT = int(os.environ.get("LOG_VIEWER_PORT", "8082"))
+LISTEN_HOST = os.environ.get("LOG_VIEWER_HOST", "127.0.0.1")
 BASE_PATH = os.environ.get("BASE_PATH", "/logs")
 
 # ─── HTML helpers ─────────────────────────────────────────────────────────────
@@ -206,6 +207,13 @@ def find_most_recent_date_with_data() -> date | None:
     return max(candidates) if candidates else None
 
 
+def _dt_naive_utc(dt: datetime) -> datetime:
+    """Comparações seguras entre timestamps de rotinas (ISO com TZ) e heartbeats (naive)."""
+    if dt.tzinfo is None:
+        return dt
+    return dt.astimezone(timezone.utc).replace(tzinfo=None)
+
+
 def find_last_failure(days: int = 7) -> dict | None:
     """Varre os últimos N dias e retorna a falha mais recente (rotina ou heartbeat)."""
     today = date.today()
@@ -217,7 +225,7 @@ def find_last_failure(days: int = 7) -> dict | None:
             if r.get("returncode", 0) != 0:
                 ts = r.get("timestamp", "")
                 try:
-                    dt = datetime.fromisoformat(ts)
+                    dt = _dt_naive_utc(datetime.fromisoformat(ts))
                 except Exception:
                     dt = datetime.min
                 entry = {
@@ -1238,8 +1246,8 @@ class Handler(BaseHTTPRequestHandler):
 # ─── Main ─────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    server = ThreadingHTTPServer(("127.0.0.1", PORT), Handler)
-    print(f"EvoNexus Log Viewer rodando em http://127.0.0.1:{PORT}")
+    server = ThreadingHTTPServer((LISTEN_HOST, PORT), Handler)
+    print(f"EvoNexus Log Viewer rodando em http://{LISTEN_HOST}:{PORT}")
     print(f"Logs dir: {LOGS_DIR}")
     try:
         server.serve_forever()
