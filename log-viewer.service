@@ -1,0 +1,16 @@
+[Unit]
+Description=EvoNexus Log Viewer
+After=network.target
+
+[Service]
+Type=simple
+User=evonexus
+WorkingDirectory=/home/evonexus/evo-projects/log-viewer
+ExecStart=/usr/bin/python3 /home/evonexus/evo-projects/log-viewer/server.py
+Restart=on-failure
+RestartSec=5
+StandardOutput=append:/home/evonexus/evo-projects/log-viewer/log-viewer.out
+StandardError=append:/home/evonexus/evo-projects/log-viewer/log-viewer.out
+
+[Install]
+WantedBy=multi-user.target

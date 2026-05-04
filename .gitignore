@@ -1,0 +1,13 @@
+# Runtime
+*.pid
+*.out
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
